@@ -1,8 +1,8 @@
-defmodule OpenaiTest do
+defmodule OpenAiTest do
   use ExUnit.Case
-  doctest Openai
+  doctest OpenAi
 
   test "greets the world" do
-    assert Openai.hello() == :world
+    assert OpenAi.hello() == :world
   end
 end

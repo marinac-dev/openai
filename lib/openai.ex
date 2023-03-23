@@ -1,6 +1,6 @@
-defmodule Openai do
+defmodule OpenAi do
   @moduledoc """
-  Documentation for `Openai`.
+  Documentation for `OpenAi`.
   """
 
   @doc """
@@ -8,7 +8,7 @@ defmodule Openai do
 
   ## Examples
 
-      iex> Openai.hello()
+      iex> OpenAi.hello()
       :world
 
   """
