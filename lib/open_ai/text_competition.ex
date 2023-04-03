@@ -1,6 +1,7 @@
 defmodule OpenAi.TextCompetition do
   use OpenAi.Core.Client
 
+  @doc false
   scope "/v1/completions"
 
   @type text_params :: %{

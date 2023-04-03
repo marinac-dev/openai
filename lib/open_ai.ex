@@ -1,13 +1,14 @@
 defmodule OpenAi do
   @moduledoc """
   Documentation for `OpenAi`.
-  See https://platform.openai.com/docs/api-reference for more information.
+  See [OpenAi API docs](https://platform.openai.com/docs/api-reference) for more information.
   """
 
   use Application
   require Logger
   alias OpenAi.Utils.SseParser
 
+  @doc false
   def start(_type, _args) do
     children = [
       {Finch, name: OpenAiFinch}

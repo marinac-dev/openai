@@ -5,6 +5,7 @@ defmodule OpenAi.Embedding do
 
   use OpenAi.Core.Client
 
+  @doc false
   scope "/v1/embeddings"
 
   @doc """

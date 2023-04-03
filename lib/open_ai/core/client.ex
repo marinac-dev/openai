@@ -1,6 +1,7 @@
 defmodule OpenAi.Core.Client do
   defmacro __using__(_opts) do
     quote do
+      @doc false
       def request_builder(method, path, body, params) do
         full_url = api_url() <> api_path() <> path
 

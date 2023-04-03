@@ -15,38 +15,42 @@ defmodule OpenAi.ChatCompetition do
   - `frequency_penalty` - Number between -2.0 and 2.0. Positive values penalize new tokens based on their existing frequency in the text so far, decreasing the model's likelihood to repeat the same line verbatim.
   - `logit_bias` - Modify the likelihood of specified tokens appearing in the completion.
 
-        {
-          "model": "gpt-3.5-turbo",
-          "messages": [{"role": "user", "content": "Hello!"}]
-        }
+  ### Chat Message Format (JSON)
+
+  ```json
+  {
+    "model": "gpt-3.5-turbo",
+    "messages": [{"role": "user", "content": "Hello!"}]
+  }
+  ```
 
   ### Chat Response
 
-      {
-        "id": "chatcmpl-123",
-        "object": "chat.completion",
-        "created": 1677652288,
-        "choices": [{
-          "index": 0,
-          "message": {
-            "role": "assistant",
-            "content": "Hello there, how may I assist you today?",
-          },
-          "finish_reason": "stop"
-        }],
-        "usage": {
-          "prompt_tokens": 9,
-          "completion_tokens": 12,
-          "total_tokens": 21
-        }
-      }
-
-  ### Text Parameters
-
+  ```json
+  {
+    "id": "chatcmpl-123",
+    "object": "chat.completion",
+    "created": 1677652288,
+    "choices": [{
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "Hello there, how may I assist you today?",
+      },
+      "finish_reason": "stop"
+    }],
+    "usage": {
+      "prompt_tokens": 9,
+      "completion_tokens": 12,
+      "total_tokens": 21
+    }
+  }
+  ```
   """
 
   use OpenAi.Core.Client
 
+  @doc false
   scope "/v1/chat/completions"
 
   @type chat_params :: %{
@@ -71,15 +75,42 @@ defmodule OpenAi.ChatCompetition do
   If the `stream` option is set to `true`, the API will return a stream of partial message deltas, like in ChatGPT.
   Tokens will be sent as data-only server-sent events as they become available, with the stream terminated by a data: [DONE] message.
 
+  ### Parameters
+  - `prompt` - The prompt to generate completions for, in the chat format `chat_params`.
+  - `options` - A list of options to pass to the API.
+
   ### Example
 
       iex> prompt = %{model: "gpt-3.5-turbo", messages: [%{role: "user", content: "Hello!"}], stream: true}
       iex> OpenAi.ChatCompetition.chat_completion(prompt)
-      {:ok, %Finch.Stream{conn: #PID<0.1001.0>, ref: #Reference<
-
-  ### Parameters
-  - `prompt` - The prompt to generate completions for, in the chat format `chat_params`.
-  - `options` - A list of options to pass to the API.
+      # Input is manually truncated for brevity
+      %{
+        body: [
+          "data": [DONE]",
+          "data: {\"id\":\"chatcmpl-71J1h5BzDi9VhHuScOuNGrlxmexoU\",\"object\":\"chat.completion.chunk\",\"created\":1680545821,\"model\":\"gpt-3.5-turbo-0301\",\"choices\":[{\"delta\":{},\"index\":0,\"finish_reason\":\"stop\"}]}",
+          "data: {\"id\":\"chatcmpl-71J1h5BzDi9VhHuScOuNGrlxmexoU\",\"object\":\"chat.completion.chunk\",\"created\":1680545821,\"model\":\"gpt-3.5-turbo-0301\",\"choices\":[{\"delta\":{\"content\":\"?\"},\"index\":0,\"finish_reason\":null}]}",
+          "data: {\"id\":\"chatcmpl-71J1h5BzDi9VhHuScOuNGrlxmexoU\",\"object\":\"chat.completion.chunk\",\"created\":1680545821,\"model\":\"gpt-3.5-turbo-0301\",\"choices\":[{\"delta\":{\"content\":\" today\"},\"index\":0,\"finish_reason\":null}]},
+          <> ...
+        ],
+      headers: [
+          {"date", "Mon, 03 Apr 2023 18:17:01 GMT"},
+          {"content-type", "text/event-stream"},
+          {"transfer-encoding", "chunked"},
+          {"connection", "keep-alive"},
+          {"access-control-allow-origin", "*"},
+          {"cache-control", "no-cache, must-revalidate"},
+          {"openai-model", "gpt-3.5-turbo-0301"},
+          {"openai-processing-ms", "139"},
+          {"openai-version", "2020-10-01"},
+          {"strict-transport-security", "max-age=15724800; includeSubDomains"},
+          {"x-ratelimit-limit-requests", "3500"},
+          {"x-ratelimit-remaining-requests", "3499"},
+          {"x-ratelimit-reset-requests", "17ms"},
+          {"cf-cache-status", "DYNAMIC"},
+      ],
+      status: 200,
+      type: :stream
+      }
 
   """
 
