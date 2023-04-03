@@ -5,6 +5,8 @@ defmodule OpenAi do
   """
 
   use Application
+  require Logger
+  alias OpenAi.Utils.SseParser
 
   def start(_type, _args) do
     children = [
@@ -18,41 +20,70 @@ defmodule OpenAi do
   @doc """
   Creates a completion for the chat message
 
-  ### Parameters
-  - `prompt` - The prompt for the chat message
-  - `options` - A list of options to pass to the API client
+  ### Example
 
-      {
-        "model": "gpt-3.5-turbo",
-        "messages": [{"role": "user", "content": "Hello!"}]
-        "max_tokens": 500,
-        "temperature": 0.9,
-      }
-
-  ### Response
-
-      {
-        "id": "chatcmpl-123",
-        "object": "chat.completion",
-        "created": 1677652288,
-        "choices": [{
-          "index": 0,
-          "message": {
-            "role": "assistant",
-            "content": "\n\nHello there, how may I assist you today?",
-          },
-          "finish_reason": "stop"
-        }],
-        "usage": {
-          "prompt_tokens": 9,
-          "completion_tokens": 12,
-          "total_tokens": 21
-        }
-      }
-
+      iex> prompt = %{model: "gpt-3.5-turbo", messages: [%{role: "user", content: "Hello!"}], stream: true}
+      iex> chat_completion(prompt)
+      {:ok, "Hello! How may I assist you today?"}
   """
 
-  def chat_completion(prompt, options \\ []) do
-    OpenAi.Competition.chat_completion(prompt, options)
+  @spec chat_completion(map(), list()) :: {:ok, map()} | {:error, map()}
+  def chat_completion(prompt, options \\ [])
+
+  def chat_completion(%{stream: true} = prompt, options) do
+    OpenAi.ChatCompetition.chat_completion(prompt, options) |> parse_response()
+  end
+
+  def chat_completion(prompt, options) do
+    OpenAi.ChatCompetition.chat_completion(prompt, options) |> parse_response()
+  end
+
+  @doc """
+  Creates a completion for the text input
+
+  ### Example
+
+      iex> params = %{model: "text-davinci-003", prompt: "Hello, my name is", max_tokens: 500}
+      iex> OpenAi.text_completion(params)
+      {:ok,
+        %{
+          "choices" => [
+            %{
+              "finish_reason" => "stop",
+              "index" => 0,
+              "logprobs" => nil,
+              "text" => "Hi there! Nice to meet you!"
+            }
+          ],
+          "created" => 1680536541,
+          "id" => "cmpl-71GG146yP5Fq3nkLaBtECakV3gfzY",
+          "model" => "text-davinci-003",
+          "object" => "text_completion",
+          "usage" => %{
+            "completion_tokens" => 12,
+            "prompt_tokens" => 3,
+            "total_tokens" => 15
+          }
+        }
+      }
+  """
+
+  @spec text_completion(map(), list()) :: {:ok, map()} | {:error, map()}
+  def text_completion(prompt, options \\ []) do
+    OpenAi.TextCompetition.text_completion(prompt, options) |> parse_response()
+  end
+
+  # * Private helpers
+
+  defp parse_response({:ok, %{type: :stream, body: stream}}), do: {:ok, SseParser.parse(stream)}
+  defp parse_response({:ok, %Finch.Response{body: body}}), do: body |> Jason.decode()
+
+  defp parse_response({:error, %Mint.TransportError{reason: :timeout}} = error) do
+    Logger.error("OpenAi request timed out with error: #{inspect(error)}")
+    {:error, error}
+  end
+
+  defp parse_response({:error, %Finch.Error{} = error}) do
+    {:error, error}
   end
 end
