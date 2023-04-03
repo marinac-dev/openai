@@ -1,4 +1,4 @@
-defmodule OpenAi.Competition do
+defmodule OpenAi.ChatCompetition do
   @moduledoc """
   A client for interacting with the OpenAI Competition API.
 
@@ -47,7 +47,7 @@ defmodule OpenAi.Competition do
 
   use OpenAi.Core.Client
 
-  scope "/completions"
+  scope "/v1/chat/completions"
 
   @type chat_params :: %{
           model: String.t(),
@@ -63,8 +63,6 @@ defmodule OpenAi.Competition do
           logit_bias: map()
         }
 
-  @text_url "/v1/completions"
-  @chat_url "/v1/chat/completions"
   @doc """
   Creates a completion for the chat message.
 
@@ -75,8 +73,9 @@ defmodule OpenAi.Competition do
 
   ### Example
 
-      iex> {:ok, %{body: stream_ref}} = OpenAi.chat_completion(%{stream: true, model: "gpt-4", messages: [%{role: "user", content: content}]})
-      iex> {:ok, %{body: response}} = ref |> Stream.each( * DO SOMETHING WITH THE RESPONSE * ) |> Stream.run()
+      iex> prompt = %{model: "gpt-3.5-turbo", messages: [%{role: "user", content: "Hello!"}], stream: true}
+      iex> OpenAi.ChatCompetition.chat_completion(prompt)
+      {:ok, %Finch.Stream{conn: #PID<0.1001.0>, ref: #Reference<
 
   ### Parameters
   - `prompt` - The prompt to generate completions for, in the chat format `chat_params`.
@@ -84,21 +83,20 @@ defmodule OpenAi.Competition do
 
   """
 
+  @spec chat_completion(map(), keyword) :: {:ok, Finch.Stream.t()} | {:ok, %{type: :stream}} | {:error, any}
   def chat_completion(prompt, options \\ [])
 
   def chat_completion(%{stream: true} = prompt, options) do
-    post(@chat_url, prompt, options)
+    jdata = Jason.encode!(prompt)
+    conn = %{headers: nil, status: nil, body: [], type: :stream}
+    stream(:post, "", jdata, options, conn, &stream_callback/2)
   end
 
   def chat_completion(prompt, options) do
-    post(@chat_url, prompt, options)
+    post("", prompt, options)
   end
 
-  @doc """
-  Creates a completion for the text input.
-  """
-
-  def text_completion(prompt, options \\ []) do
-    post(@text_url, prompt, options)
-  end
+  defp stream_callback({:status, data}, acc), do: %{acc | status: data}
+  defp stream_callback({:headers, headers}, acc), do: %{acc | headers: headers}
+  defp stream_callback({:data, data}, %{body: body} = acc), do: %{acc | body: [data | body]}
 end
