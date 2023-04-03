@@ -73,10 +73,41 @@ defmodule OpenAi do
     OpenAi.TextCompetition.text_completion(prompt, options) |> parse_response()
   end
 
+  @doc """
+  Creates an embedding vector representing the input text.
+
+  ### Example
+      iex> prompt = %{model: "ada", input: "The food was delicious and the waiter..."}
+      iex> OpenAi.embed_text(prompt)
+      {:ok,
+      %{
+        "data" => [
+          %{
+            "embedding" => [-0.021522176, -0.014890195, -0.018460283, -0.029145142,
+              -0.02502874, 0.050845187, -0.018511103, -0.015792245, -0.0012966983,
+              -0.013047977, 0.019705368, 0.0050216294, -0.0069686617, -0.013975439,
+              -0.013467241, 0.016541837, 7.7867415e-5, 0.0030603034, -0.027595138,
+              -0.0067907926, ...],
+            "index" => 0,
+            "object" => "embedding"
+          }
+        ],
+        "model" => "text-embedding-ada-002-v2",
+        "object" => "list",
+        "usage" => %{"prompt_tokens" => 5, "total_tokens" => 5}
+        }
+      }
+
+  """
+  @spec embed_text(map(), list()) :: {:ok, map()} | {:error, map()}
+  def embed_text(prompt, options \\ []) do
+    OpenAi.Embedding.create_embedding(prompt, options) |> parse_response()
+  end
+
   # * Private helpers
 
   defp parse_response({:ok, %{type: :stream, body: stream}}), do: {:ok, SseParser.parse(stream)}
-  defp parse_response({:ok, %Finch.Response{body: body}}), do: body |> Jason.decode()
+  defp parse_response({:ok, %{body: body}}), do: body |> Jason.decode()
 
   defp parse_response({:error, %Mint.TransportError{reason: :timeout}} = error) do
     Logger.error("OpenAi request timed out with error: #{inspect(error)}")
