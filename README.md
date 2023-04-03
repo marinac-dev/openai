@@ -1,20 +1,18 @@
 # OpenAi
 
-**TODO: Add description**
+Elixir client library for OpenAi API with support for Server Side Events (streaming).
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
+Not available in Hex, but the package can be installed from git
 by adding `openai` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
   [
-    {:openai, "~> 0.1.0"}
+    {:openai, git: "git@github.com:marinac-dev/openai.git", branch: "master"},
   ]
 end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at <https://hexdocs.pm/openai>.
+Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc) by running `mix docs`.
