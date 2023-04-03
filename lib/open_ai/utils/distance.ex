@@ -1,4 +1,4 @@
-defmodule Utils.Distance do
+defmodule OpenAi.Utils.Distance do
   def cosine(a, b) do
     t1 = Nx.tensor(a, type: {:f, 64})
     t2 = Nx.tensor(b, type: {:f, 64})
