@@ -1,4 +1,4 @@
-defmodule OpenAi.TextCompetition do
+defmodule OpenAi.TextCompletion do
   use OpenAi.Core.Client
 
   @doc false

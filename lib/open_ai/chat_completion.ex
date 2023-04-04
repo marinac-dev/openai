@@ -1,4 +1,4 @@
-defmodule OpenAi.ChatCompetition do
+defmodule OpenAi.ChatCompletion do
   @moduledoc """
   A client for interacting with the OpenAI Competition API.
 

@@ -32,11 +32,11 @@ defmodule OpenAi do
   def chat_completion(prompt, options \\ [])
 
   def chat_completion(%{stream: true} = prompt, options) do
-    OpenAi.ChatCompetition.chat_completion(prompt, options) |> parse_response()
+    OpenAi.ChatCompletion.chat_completion(prompt, options) |> parse_response()
   end
 
   def chat_completion(prompt, options) do
-    OpenAi.ChatCompetition.chat_completion(prompt, options) |> parse_response()
+    OpenAi.ChatCompletion.chat_completion(prompt, options) |> parse_response()
   end
 
   @doc """
@@ -71,7 +71,7 @@ defmodule OpenAi do
 
   @spec text_completion(map(), list()) :: {:ok, map()} | {:error, map()}
   def text_completion(prompt, options \\ []) do
-    OpenAi.TextCompetition.text_completion(prompt, options) |> parse_response()
+    OpenAi.TextCompletion.text_completion(prompt, options) |> parse_response()
   end
 
   @doc """
