@@ -124,7 +124,8 @@ defmodule OpenAi.ChatCompletion do
   end
 
   def chat_completion(prompt, options) do
-    post("", prompt, options)
+    jdata = Jason.encode!(prompt)
+    post("", jdata, options)
   end
 
   defp stream_callback({:status, data}, acc), do: %{acc | status: data}

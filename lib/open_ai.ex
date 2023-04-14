@@ -28,7 +28,7 @@ defmodule OpenAi do
       {:ok, "Hello! How may I assist you today?"}
   """
 
-  @spec chat_completion(map(), list()) :: {:ok, map()} | {:error, map()}
+  @spec chat_completion(map(), list()) :: {:ok, String.t()} | {:ok, map()} | {:error, map()}
   def chat_completion(prompt, options \\ [])
 
   def chat_completion(%{stream: true} = prompt, options) do
@@ -69,7 +69,7 @@ defmodule OpenAi do
       }
   """
 
-  @spec text_completion(map(), list()) :: {:ok, map()} | {:error, map()}
+  @spec text_completion(map(), list()) :: {:ok, map()} | {:ok, String.t()} | {:error, map()}
   def text_completion(prompt, options \\ []) do
     OpenAi.TextCompletion.text_completion(prompt, options) |> parse_response()
   end
@@ -78,7 +78,7 @@ defmodule OpenAi do
   Creates an embedding vector representing the input text.
 
   ### Example
-      iex> prompt = %{model: "ada", input: "The food was delicious and the waiter..."}
+      iex> prompt = %{model: "text-embedding-ada-002", input: "The food was delicious and the waiter..."}
       iex> OpenAi.embed_text(prompt)
       {:ok,
       %{

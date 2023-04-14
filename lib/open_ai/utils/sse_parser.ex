@@ -23,8 +23,10 @@ defmodule OpenAi.Utils.SseParser do
     |> Jason.decode!()
     |> Map.get("choices")
     |> List.first()
-    |> Map.get("delta")
-    |> parse_delta()
+    |> case do
+      %{"text" => text} -> text
+      %{"delta" => delta} -> parse_delta(delta)
+    end
   end
 
   defp parse_delta(%{"role" => "assistant"}), do: ""

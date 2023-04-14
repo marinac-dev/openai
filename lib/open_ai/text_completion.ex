@@ -46,9 +46,21 @@ defmodule OpenAi.TextCompletion do
       iex> text_completion(prompt)
   """
 
-  @spec text_completion(text_params, list()) :: {:ok, %Finch.Response{}} | {:error, map()}
-  def text_completion(prompt, options \\ []) when is_map(prompt) do
+  @spec text_completion(text_params(), keyword()) :: {:ok, %Finch.Response{}} | {:error, map()}
+  def text_completion(prompt, options \\ [])
+
+  def text_completion(%{stream: true} = prompt, options) do
+    jdata = Jason.encode!(prompt)
+    conn = %{headers: nil, status: nil, body: [], type: :stream}
+    stream(:post, "", jdata, options, conn, &stream_callback/2)
+  end
+
+  def text_completion(prompt, options) do
     jdata = Jason.encode!(prompt)
     post("", jdata, options)
   end
+
+  defp stream_callback({:status, data}, acc), do: %{acc | status: data}
+  defp stream_callback({:headers, headers}, acc), do: %{acc | headers: headers}
+  defp stream_callback({:data, data}, %{body: body} = acc), do: %{acc | body: [data | body]}
 end
