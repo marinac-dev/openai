@@ -16,3 +16,21 @@ end
 ```
 
 Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc) by running `mix docs`.
+
+## Configuration
+
+```elixir
+config :openai,
+  api_key: System.get_env("OPENAI_API_KEY"),
+  organization_key: System.get_env("OPENAI_ORGANIZATION_KEY")
+```
+
+## Usage
+
+Once configured in your `config.ex` file, you can use the client to call the OpenAi API instantly.
+
+```elixir
+prompt = %{model: "gpt-3.5-turbo", messages: [%{role: "user", content: "Hello!"}], stream: true}
+OpenAi.chat_completion(prompt)
+{:ok, "Hello! How may I assist you today?"}
+```
