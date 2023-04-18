@@ -1,6 +1,6 @@
 # OpenAi
 
-Elixir client library for OpenAi API with support for Server Side Events (streaming).
+Elixir OpenAi client library for with full support for streaming or SSE (Server Side Events).
 
 ## Installation
 
