@@ -27,6 +27,7 @@ defmodule OpenAi.MixProject do
       {:idna, "~> 6.0"},
       {:castore, "~> 0.1"},
       {:nx, "~> 0.5.2"},
+      {:multipart, "~> 0.3.1"},
       # * Code quality
       {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.0", only: [:dev], runtime: false}
