@@ -105,6 +105,48 @@ defmodule OpenAi do
     OpenAi.Embedding.create_embedding(prompt, options) |> parse_response()
   end
 
+  @doc """
+  Returns a list of files that belong to the user's organization.
+  """
+  @spec list_files() :: {:ok, map()} | {:error, map()}
+  def list_files() do
+    OpenAi.Files.list_files() |> parse_response()
+  end
+
+  @doc """
+  Upload a file that contains document(s) to be used across various endpoints/features.
+  Currently, the size of all the files uploaded by one organization can be up to 1 GB
+  """
+  @spec upload_file(String.t(), String.t(), list()) :: {:ok, map()} | {:error, map()}
+  def upload_file(file_path, purpose, options \\ []) do
+    OpenAi.Files.upload_file({file_path, purpose}, options) |> parse_response()
+  end
+
+  @doc """
+  Delete a file
+  """
+  @spec delete_file(String.t()) :: {:ok, map()} | {:error, map()}
+  def delete_file(file_id) do
+    OpenAi.Files.delete_file(file_id) |> parse_response()
+  end
+
+  @doc """
+  Returns information about a specific file.
+  """
+  @spec retrieve_file(String.t()) :: {:ok, map()} | {:error, map()}
+  def retrieve_file(file_id) do
+    OpenAi.Files.retrieve_file(file_id) |> parse_response()
+  end
+
+  @doc """
+  Returns the contents of the specified file.
+  Takes a file id and returns the contents of the file.
+  """
+  @spec file_content(String.t()) :: {:ok, map()} | {:error, map()}
+  def file_content(file_id) do
+    OpenAi.Files.retrieve_file_content(file_id) |> parse_response()
+  end
+
   # * Private helpers
 
   defp parse_response({:ok, %{type: :stream, body: stream}}), do: {:ok, SseParser.parse(stream)}
