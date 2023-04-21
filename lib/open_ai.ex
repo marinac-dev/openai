@@ -19,6 +19,51 @@ defmodule OpenAi do
   end
 
   @doc """
+  Lists the currently available models, and provides basic information about each one such as the owner and availability.
+  """
+  @spec list_models() :: {:ok, map()} | {:error, map()}
+  def list_models() do
+    OpenAi.Models.list_models() |> parse_response()
+  end
+
+  @doc """
+  Retrieves a model instance, providing basic information about the model such as the owner and permissioning.
+
+  ### Example
+
+      iex> OpenAi.retrieve_model("gpt-4")
+      {:ok,
+      %{
+        "created" => 1678604602,
+        "id" => "gpt-4",
+        "object" => "model",
+        "owned_by" => "openai",
+        "parent" => nil,
+        "permission" => [
+          %{
+            "allow_create_engine" => false,
+            "allow_fine_tuning" => true,
+            "allow_logprobs" => true,
+            "allow_sampling" => true,
+            "allow_search_indices" => false,
+            "allow_view" => false,
+            "created" => 1681332181,
+            "group" => nil,
+            "id" => "modelperm-dIkqFqETCY114q1m9DoYiQgO",
+            "is_blocking" => false,
+            "object" => "model_permission",
+            "organization" => "*"
+          }
+        ],
+        "root" => "gpt-4"
+      }}
+  """
+  @spec retrieve_model(String.t()) :: {:ok, map()} | {:error, map()}
+  def retrieve_model(model_id) do
+    OpenAi.Models.retrieve_model(model_id) |> parse_response()
+  end
+
+  @doc """
   Creates a completion for the chat message
 
   ### Example
