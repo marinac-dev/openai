@@ -262,10 +262,13 @@ defmodule OpenAi do
 
   # * Private helpers
 
-  defp parse_response({:ok, %{type: :stream, body: stream}}), do: {:ok, SseParser.parse(stream)}
-  defp parse_response({:ok, %{body: body}}), do: body |> Jason.decode()
+  defp parse_response({:ok, %{body: %{type: :stream} = stream}}),
+    do: {:ok, SseParser.parse(stream)}
 
-  defp parse_response({:error, %Mint.TransportError{reason: :timeout}} = error) do
+  defp parse_response({:ok, %{body: body}}),
+    do: body |> Jason.decode()
+
+  defp parse_response({:error, %Mint.TransportError{reason: :timeout} = error}) do
     Logger.error("OpenAi request timed out with error: #{inspect(error)}")
     {:error, error}
   end
