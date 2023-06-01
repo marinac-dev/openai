@@ -151,6 +151,34 @@ defmodule OpenAi do
   end
 
   @doc """
+  Given a prompt and an instruction, the model will return an edited version of the prompt.
+
+  Example:
+
+      iex> prompt = %{
+            model: "text-davinci-edit-001",
+            input: "What day of the wek is it?",
+            instruction: "Fix the spelling mistakes"
+          }
+      iex> OpenAi.edit_text(prompt)
+      {:ok,
+        %{
+          "choices" => [%{"index" => 0, "text" => "What day of the week is it?\\n"}],
+          "created" => 1_685_647_714,
+          "object" => "edit",
+          "usage" => %{
+            "completion_tokens" => 28,
+            "prompt_tokens" => 25,
+            "total_tokens" => 53
+          }
+        }}
+  """
+  @spec edit_text(map(), list()) :: {:ok, map()} | {:error, map()}
+  def edit_text(prompt, options \\ []) do
+    OpenAi.Edit.create_edit(prompt, options) |> parse_response()
+  end
+
+  @doc """
   Returns a list of files that belong to the user's organization.
   """
   @spec list_files() :: {:ok, map()} | {:error, map()}
