@@ -192,6 +192,46 @@ defmodule OpenAi do
     OpenAi.Files.retrieve_file_content(file_id) |> parse_response()
   end
 
+  @doc """
+  Given a input text, outputs if the model classifies it as violating OpenAI's content policy.
+
+  Example:
+
+      iex(1)> OpenAi.moderation "API TEST: I want to [REDACTED] myself"
+      {:ok,
+      %{
+        "id" => "modr-[REDACTED]",
+        "model" => "text-moderation-004",
+        "results" => [
+          %{
+            "categories" => %{
+              "hate" => false,
+              "hate/threatening" => false,
+              "self-harm" => true,
+              "sexual" => false,
+              "sexual/minors" => false,
+              "violence" => false,
+              "violence/graphic" => false
+            },
+            "category_scores" => %{
+              "hate" => 8.627928e-5,
+              "hate/threatening" => 2.786682e-6,
+              "self-harm" => 0.9999901,
+              "sexual" => 1.0644417e-5,
+              "sexual/minors" => 3.3277047e-7,
+              "violence" => 0.029253,
+              "violence/graphic" => 4.117339e-5
+            },
+            "flagged" => true
+          }
+        ]
+      }}
+  """
+  @spec moderation(String.t(), String.t(), list()) :: {:ok, map()} | {:error, map()}
+  def moderation(text, model \\ "text-moderation-latest", options \\ []) do
+    OpenAi.Moderation.classify(text, model, options) |> parse_response()
+  end
+
   # * Private helpers
 
   defp parse_response({:ok, %{type: :stream, body: stream}}), do: {:ok, SseParser.parse(stream)}
