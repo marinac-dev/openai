@@ -12,24 +12,32 @@ defmodule OpenAi.Utils.SseParser do
     |> Enum.reduce([], fn
       "", acc -> acc
       "[DONE]" <> _, acc -> acc
-      data, acc -> [parse_data(data) | acc]
+      line, acc -> [parse_line(line) | acc]
     end)
     |> Enum.reverse()
-    |> Enum.join()
+
+    # |> Enum.join()
   end
 
-  defp parse_data(data) do
+  defp parse_line(data) do
     data
     |> Jason.decode!()
     |> Map.get("choices")
     |> List.first()
     |> case do
+      # * This is for streaming text responses
       %{"text" => text} -> text
+      # * This is for streaming chat responses
       %{"delta" => delta} -> parse_delta(delta)
     end
   end
 
-  defp parse_delta(%{"role" => "assistant"}), do: ""
+  # * Order matters here
+  defp parse_delta(%{"function_call" => function_call}) do
+    IO.inspect(function_call, label: "function_call")
+    function_call
+  end
+
   defp parse_delta(%{"content" => content}), do: content
   defp parse_delta(%{}), do: ""
 end
