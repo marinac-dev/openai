@@ -25,6 +25,18 @@ config :openai,
   organization_key: System.get_env("OPENAI_ORGANIZATION_KEY")
 ```
 
+If you want to use retry mechanism, you can configure it like this:
+
+```elixir
+config :openai,
+  api_key: System.get_env("OPENAI_API_KEY"),
+  organization_key: System.get_env("OPENAI_ORGANIZATION_KEY"),
+  retry_config: %{
+    retries: 5,
+    delay: 200
+  }
+```
+
 ## Usage
 
 Once configured in your `config.ex` file, you can use the client to call the OpenAi API instantly.
