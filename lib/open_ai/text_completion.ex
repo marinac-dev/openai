@@ -46,21 +46,22 @@ defmodule OpenAi.TextCompletion do
       iex> text_completion(prompt)
   """
 
-  @spec text_completion(text_params(), keyword()) :: {:ok, %Finch.Response{}} | {:error, map()}
-  def text_completion(prompt, options \\ [])
+  @spec text_completion(text_params(), keyword(), function()) :: {:ok, %Finch.Response{}} | {:error, map()}
+  def text_completion(%{stream: true} = prompt, options, :default),
+    do: text_completion(prompt, options, &default_stream_callback/2)
 
-  def text_completion(%{stream: true} = prompt, options) do
+  def text_completion(%{stream: true} = prompt, options, stream_callback) do
     jdata = Jason.encode!(prompt)
     conn = %{headers: nil, status: nil, body: [], type: :stream}
-    stream(:post, "", jdata, options, conn, &stream_callback/2)
+    stream(:post, "", jdata, options, conn, stream_callback)
   end
 
-  def text_completion(prompt, options) do
+  def text_completion(prompt, options, _) do
     jdata = Jason.encode!(prompt)
     post("", jdata, %{}, options)
   end
 
-  defp stream_callback({:status, data}, acc), do: %{acc | status: data}
-  defp stream_callback({:headers, headers}, acc), do: %{acc | headers: headers}
-  defp stream_callback({:data, data}, %{body: body} = acc), do: %{acc | body: [data | body]}
+  defp default_stream_callback({:status, data}, acc), do: %{acc | status: data}
+  defp default_stream_callback({:headers, headers}, acc), do: %{acc | headers: headers}
+  defp default_stream_callback({:data, data}, %{body: body} = acc), do: %{acc | body: [data | body]}
 end
