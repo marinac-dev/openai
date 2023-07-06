@@ -53,9 +53,24 @@ defmodule OpenAi.ChatCompletion do
   @doc false
   scope "/v1/chat/completions"
 
+  @type message_object :: %{
+          role: String.t(),
+          content: String.t(),
+          name: String.t(),
+          function_call: map()
+        }
+
+  @type function_object :: %{
+          name: String.t(),
+          description: String.t(),
+          parameters: String.t()
+        }
+
   @type chat_params :: %{
           model: String.t(),
-          messages: list(),
+          messages: [message_object()],
+          functions: function_object(),
+          function_call: String.t() | map(),
           temperature: float(),
           top_p: float(),
           n: integer(),
@@ -92,7 +107,7 @@ defmodule OpenAi.ChatCompletion do
           "data: {\"id\":\"chatcmpl-71J1h5BzDi9VhHuScOuNGrlxmexoU\",\"object\":\"chat.completion.chunk\",\"created\":1680545821,\"model\":\"gpt-3.5-turbo-0301\",\"choices\":[{\"delta\":{\"content\":\" today\"},\"index\":0,\"finish_reason\":null}]},
           <> ...
         ],
-      headers: [
+        headers: [
           {"date", "Mon, 03 Apr 2023 18:17:01 GMT"},
           {"content-type", "text/event-stream"},
           {"transfer-encoding", "chunked"},
@@ -107,28 +122,29 @@ defmodule OpenAi.ChatCompletion do
           {"x-ratelimit-remaining-requests", "3499"},
           {"x-ratelimit-reset-requests", "17ms"},
           {"cf-cache-status", "DYNAMIC"},
-      ],
-      status: 200,
-      type: :stream
+        ],
+        status: 200,
+        type: :stream
       }
-
   """
 
-  @spec chat_completion(map(), keyword) :: {:ok, Finch.Stream.t()} | {:ok, %{type: :stream}} | {:error, any}
-  def chat_completion(prompt, options \\ [])
+  @spec chat_completion(chat_params(), keyword(), function()) :: {:ok, map() | %{stream: true}} | {:error, map()}
 
-  def chat_completion(%{stream: true} = prompt, options) do
+  def chat_completion(%{stream: true} = prompt, options, :default),
+    do: chat_completion(prompt, options, &default_stream_callback/2)
+
+  def chat_completion(%{stream: true} = prompt, options, stream_callback) do
     jdata = Jason.encode!(prompt)
     conn = %{headers: nil, status: nil, body: [], type: :stream}
-    stream(:post, "", jdata, options, conn, &stream_callback/2)
+    stream(:post, "", jdata, options, conn, stream_callback)
   end
 
-  def chat_completion(prompt, options) do
+  def chat_completion(prompt, options, _) do
     jdata = Jason.encode!(prompt)
     post("", jdata, %{}, options)
   end
 
-  defp stream_callback({:status, data}, acc), do: %{acc | status: data}
-  defp stream_callback({:headers, headers}, acc), do: %{acc | headers: headers}
-  defp stream_callback({:data, data}, %{body: body} = acc), do: %{acc | body: [data | body]}
+  defp default_stream_callback({:status, data}, acc), do: %{acc | status: data}
+  defp default_stream_callback({:headers, headers}, acc), do: %{acc | headers: headers}
+  defp default_stream_callback({:data, data}, %{body: body} = acc), do: %{acc | body: [data | body]}
 end
