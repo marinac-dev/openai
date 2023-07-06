@@ -24,9 +24,9 @@ defmodule OpenAi do
   @doc """
   Lists the currently available models, and provides basic information about each one such as the owner and availability.
   """
-  @spec list_models() :: {:ok, map()} | {:error, map()}
+  @spec list_models() :: ListModels.t() | {:error, map()}
   def list_models() do
-    OpenAi.Models.list_models() |> parse_response()
+    OpenAi.Models.list_models() |> ListModels.parse()
   end
 
   @doc """
@@ -61,9 +61,9 @@ defmodule OpenAi do
         "root" => "gpt-4"
       }}
   """
-  @spec retrieve_model(String.t()) :: {:ok, map()} | {:error, map()}
+  @spec retrieve_model(String.t()) :: RetrieveModel.t() | {:error, map()}
   def retrieve_model(model_id) do
-    OpenAi.Models.retrieve_model(model_id) |> parse_response()
+    OpenAi.Models.retrieve_model(model_id) |> RetrieveModel.parse()
   end
 
   @doc """
@@ -261,9 +261,6 @@ defmodule OpenAi do
   defp parse_response({:ok, %{body: body, status: status_code}}) when status_code >= 400 and status_code < 500 do
     {:error, %{status_code: status_code, body: body}}
   end
-
-  defp parse_response({:ok, %{body: stream, type: :stream}}),
-    do: {:ok, SseParser.parse(stream)}
 
   defp parse_response({:ok, %{body: body}}),
     do: body |> Jason.decode()
