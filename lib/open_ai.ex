@@ -77,8 +77,8 @@ defmodule OpenAi do
   """
 
   @spec chat_completion(map(), list()) :: {:ok, String.t()} | {:ok, map()} | {:error, map()}
-  def chat_completion(prompt, streaming_callback \\ :default, options \\ []) do
-    OpenAi.ChatCompletion.chat_completion(prompt, streaming_callback, options) |> ChatCompletion.parse()
+  def chat_completion(prompt, options \\ []) do
+    OpenAi.ChatCompletion.chat_completion(prompt, options) |> ChatCompletion.parse()
   end
 
   @doc """
