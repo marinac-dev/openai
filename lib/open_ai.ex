@@ -6,7 +6,10 @@ defmodule OpenAi do
 
   use Application
   require Logger
-  alias OpenAi.Utils.SseParser
+
+  alias OpenAi.Core.Response.ListModels
+  alias OpenAi.Core.Response.RetrieveModel
+  alias OpenAi.Core.Response.ChatCompletion
 
   @doc false
   def start(_type, _args) do
@@ -74,14 +77,8 @@ defmodule OpenAi do
   """
 
   @spec chat_completion(map(), list()) :: {:ok, String.t()} | {:ok, map()} | {:error, map()}
-  def chat_completion(prompt, options \\ [])
-
-  def chat_completion(%{stream: true} = prompt, options) do
-    OpenAi.ChatCompletion.chat_completion(prompt, options) |> parse_response()
-  end
-
-  def chat_completion(prompt, options) do
-    OpenAi.ChatCompletion.chat_completion(prompt, options) |> parse_response()
+  def chat_completion(prompt, streaming_callback \\ :default, options \\ []) do
+    OpenAi.ChatCompletion.chat_completion(prompt, streaming_callback, options) |> ChatCompletion.parse()
   end
 
   @doc """
@@ -89,8 +86,8 @@ defmodule OpenAi do
 
   ### Example
 
-      iex> params = %{model: "text-davinci-003", prompt: "Hello, my name is", max_tokens: 500}
-      iex> OpenAi.text_completion(params)
+      iex> prompt = %{model: "text-davinci-003", prompt: "Hello, my name is", max_tokens: 500}
+      iex> OpenAi.text_completion(prompt)
       {:ok,
         %{
           "choices" => [
@@ -114,9 +111,9 @@ defmodule OpenAi do
       }
   """
 
-  @spec text_completion(map(), list()) :: {:ok, map()} | {:ok, String.t()} | {:error, map()}
-  def text_completion(prompt, options \\ []) do
-    OpenAi.TextCompletion.text_completion(prompt, options) |> parse_response()
+  @spec text_completion(map(), function(), list()) :: {:ok, map() | String.t()} | {:error, map()}
+  def text_completion(prompt, streaming_callback \\ :default, options \\ []) do
+    OpenAi.TextCompletion.text_completion(prompt, options, streaming_callback) |> parse_response()
   end
 
   @doc """
@@ -261,8 +258,11 @@ defmodule OpenAi do
   end
 
   # * Private helpers
+  defp parse_response({:ok, %{body: body, status: status_code}}) when status_code >= 400 and status_code < 500 do
+    {:error, %{status_code: status_code, body: body}}
+  end
 
-  defp parse_response({:ok, %{body: %{type: :stream} = stream}}),
+  defp parse_response({:ok, %{body: stream, type: :stream}}),
     do: {:ok, SseParser.parse(stream)}
 
   defp parse_response({:ok, %{body: body}}),
@@ -273,7 +273,10 @@ defmodule OpenAi do
     {:error, error}
   end
 
-  defp parse_response({:error, %Finch.Error{} = error}) do
+  defp parse_response({:error, %Finch.Error{} = error}), do: {:error, error}
+
+  defp parse_response({:error, error}) do
+    Logger.error("OpenAi request failed with error: #{inspect(error)}")
     {:error, error}
   end
 end

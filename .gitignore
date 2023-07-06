@@ -27,3 +27,6 @@ openai-*.tar
 
 config/
 .envrc
+
+# Ignore Qdrant storage
+/qdrant_storage/
