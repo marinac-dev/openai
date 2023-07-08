@@ -1,8 +1,9 @@
+# Chat Prompt
 chat_prompt = %{
   model: "gpt-4-0613",
   messages: [
     %{role: "system", content: "You are friendly."},
-    %{role: "user", content: "Hello!"},
+    %{role: "user", content: "Hello!"}
   ]
 }
 
@@ -10,7 +11,7 @@ stream_chat = %{
   model: "gpt-4-0613",
   messages: [
     %{role: "system", content: "You are friendly."},
-    %{role: "user", content: "Hello!"},
+    %{role: "user", content: "Hello!"}
   ],
   stream: true
 }
@@ -21,7 +22,10 @@ function_prompt = %{
     %{role: "user", content: "Hello!"},
     %{role: "assistant", content: "Hello there, how may I assist you today?"},
     %{role: "user", content: "I'd like to book a flight to New York City."},
-    %{role: "assistant", content: "Sure, I can assist you with that. Could you please tell me when you're planning to fly?"},
+    %{
+      role: "assistant",
+      content: "Sure, I can assist you with that. Could you please tell me when you're planning to fly?"
+    },
     %{role: "user", content: "I'd like to fly on the 23rd of June."}
   ],
   functions: [
@@ -53,7 +57,10 @@ stream_function_prompt = %{
     %{role: "user", content: "Hello!"},
     %{role: "assistant", content: "Hello there, how may I assist you today?"},
     %{role: "user", content: "I'd like to book a flight to New York City."},
-    %{role: "assistant", content: "Sure, I can assist you with that. Could you please tell me when you're planning to fly?"},
+    %{
+      role: "assistant",
+      content: "Sure, I can assist you with that. Could you please tell me when you're planning to fly?"
+    },
     %{role: "user", content: "I'd like to fly on the 23rd of June."}
   ],
   functions: [
@@ -77,3 +84,16 @@ stream_function_prompt = %{
     }
   ]
 }
+
+# Text Prompt
+text_prompt = %{
+  model: "text-davinci-003",
+  prompt: "Say this is a test",
+  max_tokens: 10,
+  temperature: 0,
+  top_p: 1,
+  n: 1,
+  stream: false
+}
+
+stream_text_prompt = %{model: "text-davinci-003", prompt: "Hello, my name is", max_tokens: 100, stream: true}
