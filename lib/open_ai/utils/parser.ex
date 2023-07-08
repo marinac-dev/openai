@@ -74,6 +74,17 @@ defmodule OpenAi.Utils.Parser do
     |> parse_choice(acc)
   end
 
+  defp parse_choice(%{"finish_reason" => "function_call"}, %{choices: [choice]} = acc) do
+    string = choice.arguments |> Enum.reverse() |> Enum.join() |> Jason.decode!()
+
+    choice =
+      choice
+      |> Map.put(:arguments, string)
+      |> Map.put(:finish_reason, :function_call)
+
+    {:halt, Map.put(acc, :choices, [choice])}
+  end
+
   defp parse_choice(%{"finish_reason" => "stop"}, %{choices: [%{content: content} = choice]} = acc) do
     string = content |> Enum.reverse() |> Enum.join()
 

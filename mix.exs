@@ -23,7 +23,7 @@ defmodule OpenAi.MixProject do
   defp deps do
     [
       {:ex_doc, "~> 0.29.2", only: :dev},
-      {:finch, "~> 0.16.0"},
+      {:finch, "~> 0.16.0", override: true},
       {:idna, "~> 6.0"},
       {:castore, "~> 0.1"},
       {:nx, "~> 0.5.2"},
