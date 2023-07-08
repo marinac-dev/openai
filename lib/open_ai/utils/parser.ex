@@ -41,7 +41,7 @@ defmodule OpenAi.Utils.Parser do
       choices: [
         %{
           finish_reason: nil,
-          text: [],
+          text: []
         }
       ],
       usage: nil
@@ -101,7 +101,10 @@ defmodule OpenAi.Utils.Parser do
     {:cont, Map.put(acc, :choices, [choice])}
   end
 
-  defp parse_choice(%{"delta" => %{"function_call" => %{"arguments" => arg}}}, %{choices: [%{arguments: args} = choice]} = acc) do
+  defp parse_choice(
+         %{"delta" => %{"function_call" => %{"arguments" => arg}}},
+         %{choices: [%{arguments: args} = choice]} = acc
+       ) do
     choice = Map.put(choice, :arguments, [arg | args])
     {:cont, Map.put(acc, :choices, [choice])}
   end
