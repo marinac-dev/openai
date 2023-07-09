@@ -1,6 +1,6 @@
-defmodule OpenAi.Core.Response.ChatCompletion do
+defmodule OpenAi.Core.Response.TextCompletition do
   @moduledoc """
-  Documentation for `ChatCompletion` response.
+  Documentation for `TextCompletion` response.
   """
   alias OpenAi.Utils.Parser
 
@@ -22,11 +22,10 @@ defmodule OpenAi.Core.Response.ChatCompletion do
   # * For parsing streaming SSE responses
   @impl true
   def parse({:ok, %{body: body, type: :stream}}) do
-    resp = Parser.parse_chat_sse(body)
+    resp = Parser.parse_text_sse(body)
     struct(__MODULE__, resp)
   end
 
-  # * For parsing HTTP responses
   @impl true
   def parse({:ok, %{body: body}}) do
     case Jason.decode(body) do

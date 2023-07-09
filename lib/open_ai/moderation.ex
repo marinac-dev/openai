@@ -10,8 +10,6 @@ defmodule OpenAi.Moderation do
   @doc false
   scope "/v1/moderations"
 
-
-
   @doc """
   Classifies if text violates OpenAI's Content Policy
 
