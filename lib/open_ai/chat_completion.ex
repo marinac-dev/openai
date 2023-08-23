@@ -128,7 +128,7 @@ defmodule OpenAi.ChatCompletion do
       }
   """
 
-  @spec chat_completion(chat_params(), keyword(), function()) :: {:ok, Finch.Response.t()} | {:error, Exception.t()}
+  @spec chat_completion(chat_params(), keyword(), atom() | function()) :: {:ok, Finch.Response.t()} | {:error, Exception.t()}
 
   def chat_completion(%{stream: true} = prompt, options, :default),
     do: chat_completion(prompt, options, &default_stream_callback/2)

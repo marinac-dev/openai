@@ -1,4 +1,4 @@
-defmodule OpenAi.Core.Response.TextCompletition do
+defmodule OpenAi.Core.Response.TextCompletion do
   @moduledoc """
   Documentation for `TextCompletion` response.
   """

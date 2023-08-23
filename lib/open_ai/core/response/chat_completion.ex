@@ -12,7 +12,7 @@ defmodule OpenAi.Core.Response.ChatCompletion do
   @type t :: %__MODULE__{
           id: String.t(),
           object: String.t(),
-          # NOTE: Returned field is created, but we rename it to created_at
+          # NOTE: Returned field is called `created`, but we rename it to `created_at` for consistency
           created_at: DateTime.t(),
           choices: list(map()),
           usage: list(map()) | nil,
