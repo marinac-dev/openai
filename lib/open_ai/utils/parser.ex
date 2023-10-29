@@ -39,14 +39,16 @@ defmodule OpenAi.Utils.Parser do
       usage: nil
     }
 
-    parse_sse(data, init_acc)
+    %{choices: [choice]} = parsed = parse_sse(data, init_acc)
+    text = choice.text |> Enum.reverse() |> Enum.join()
+    %{parsed | choices: [%{choice | text: text}]}
   end
 
   defp parse_sse(data, init_acc) do
     data
+    |> Enum.reverse()
     |> Enum.join()
     |> String.split("data: ")
-    |> Enum.reverse()
     |> Enum.reduce_while(init_acc, fn
       "", acc -> {:cont, acc}
       "[DONE]" <> _, acc -> {:cont, acc}
@@ -108,7 +110,10 @@ defmodule OpenAi.Utils.Parser do
     {:cont, Map.put(acc, :choices, [choice])}
   end
 
-  defp parse_choice(%{"delta" => %{"function_call" => %{"arguments" => arg}}}, %{choices: [%{arguments: args} = choice]} = acc) do
+  defp parse_choice(
+         %{"delta" => %{"function_call" => %{"arguments" => arg}}},
+         %{choices: [%{arguments: args} = choice]} = acc
+       ) do
     choice = Map.put(choice, :arguments, [arg | args])
     {:cont, Map.put(acc, :choices, [choice])}
   end
