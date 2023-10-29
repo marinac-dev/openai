@@ -87,7 +87,7 @@ stream_function_prompt = %{
 
 # Text Prompt
 text_prompt = %{
-  model: "text-davinci-003",
+  model: "babbage-002",
   prompt: "Say this is a test",
   max_tokens: 10,
   temperature: 0,
@@ -96,4 +96,4 @@ text_prompt = %{
   stream: false
 }
 
-stream_text_prompt = %{model: "text-davinci-003", prompt: "Hello, my name is", max_tokens: 100, stream: true}
+stream_text_prompt = %{model: "babbage-002", prompt: "Hello, my name is", max_tokens: 100, stream: true}
