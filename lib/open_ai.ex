@@ -165,7 +165,7 @@ defmodule OpenAi do
   """
   @spec embed_text(map(), list()) :: {:ok, map()} | {:error, map()}
   def embed_text(prompt, options \\ []) do
-    OpenAi.Embedding.create_embedding(prompt, options) |> parse_response()
+    OpenAi.Embedding.create_embedding(prompt, options)
   end
 
   @doc """

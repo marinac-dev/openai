@@ -2,7 +2,9 @@ defmodule OpenAi.Utils.Context do
   @moduledoc """
   Documentation for `OpenAi.Utils.Context` module.
 
-  This module contains functions for working with OpenAI chat completion contexts
+  This module contains functions for working with OpenAI chat completion contexts.
+  Contexts are used to easily keep track of the conversation history and last response.
+  Each new message is added as first item to the history list and the last response is updated.
   """
   alias OpenAi.Utils.Message
 
