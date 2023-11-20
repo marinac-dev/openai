@@ -9,13 +9,13 @@ defmodule OpenAi.Edit do
   scope "/v1/edits"
 
   @type edit_body :: %{
-    required(:model) => String.t(),
-    required(:instruction) => String.t(),
-    optional(:input) => String.t(),
-    optional(:n) => non_neg_integer(),
-    optional(:temperature) => float(),
-    optional(:top_p) => float()
-  }
+          required(:model) => String.t(),
+          required(:instruction) => String.t(),
+          optional(:input) => String.t(),
+          optional(:n) => non_neg_integer(),
+          optional(:temperature) => float(),
+          optional(:top_p) => float()
+        }
 
   @doc """
   Creates a new edit for the provided input, instruction, and parameters.

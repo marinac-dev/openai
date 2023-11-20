@@ -9,10 +9,10 @@ defmodule OpenAi.Embedding do
   scope "/v1/embeddings"
 
   @type embed_body :: %{
-    required(:input) => String.t(),
-    required(:model) => String.t(),
-    optional(:user) => String.t()
-  }
+          required(:input) => String.t(),
+          required(:model) => String.t(),
+          optional(:user) => String.t()
+        }
 
   @doc """
   Creates an embedding vector representing the input text.
@@ -59,7 +59,7 @@ defmodule OpenAi.Embedding do
 
   @spec create_embedding(embed_body(), keyword() | list()) :: {:ok, map()} | {:error, map()}
   def create_embedding(prompt, options \\ []) do
-    jdata = Jason.encode!(prompt)
-    post("", jdata, %{}, options)
+    json = Jason.encode!(prompt)
+    post("", json, %{}, options)
   end
 end

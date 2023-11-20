@@ -6,6 +6,6 @@
     stream: 6,
     scope: 1,
     post: 3,
-    get: 3,
+    get: 3
   ]
 ]

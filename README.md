@@ -39,7 +39,7 @@ config :openai,
 
 ## Usage
 
-Once configured in your `config.ex` file, you can use the client to call the OpenAi API instantly.
+Once configured in your `config.exs` file, you can use the client to call the OpenAi API instantly.
 
 ```elixir
 prompt = %{model: "gpt-3.5-turbo", messages: [%{role: "user", content: "Hello!"}], stream: true}

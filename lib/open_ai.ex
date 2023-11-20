@@ -10,6 +10,7 @@ defmodule OpenAi do
   alias OpenAi.Core.Response.ListModels
   alias OpenAi.Core.Response.RetrieveModel
   alias OpenAi.Core.Response.ChatCompletion
+  alias OpenAi.Core.Response.TextCompletion
 
   @doc false
   def start(_type, _args) do
@@ -24,9 +25,9 @@ defmodule OpenAi do
   @doc """
   Lists the currently available models, and provides basic information about each one such as the owner and availability.
   """
-  @spec list_models() :: {:ok, map()} | {:error, map()}
+  @spec list_models() :: ListModels.t() | {:error, map()}
   def list_models() do
-    OpenAi.Models.list_models() |> parse_response()
+    OpenAi.Models.list_models() |> ListModels.parse()
   end
 
   @doc """
@@ -61,9 +62,9 @@ defmodule OpenAi do
         "root" => "gpt-4"
       }}
   """
-  @spec retrieve_model(String.t()) :: {:ok, map()} | {:error, map()}
+  @spec retrieve_model(String.t()) :: RetrieveModel.t() | {:error, map()}
   def retrieve_model(model_id) do
-    OpenAi.Models.retrieve_model(model_id) |> parse_response()
+    OpenAi.Models.retrieve_model(model_id) |> RetrieveModel.parse()
   end
 
   @doc """
@@ -76,9 +77,19 @@ defmodule OpenAi do
       {:ok, "Hello! How may I assist you today?"}
   """
 
-  @spec chat_completion(map(), list()) :: {:ok, String.t()} | {:ok, map()} | {:error, map()}
-  def chat_completion(prompt, streaming_callback \\ :default, options \\ []) do
-    OpenAi.ChatCompletion.chat_completion(prompt, streaming_callback, options) |> ChatCompletion.parse()
+  @spec chat_completion(map()) :: ChatCompletion.t() | {:error, map()}
+  def chat_completion(prompt) do
+    chat_completion(prompt, [])
+  end
+
+  @spec chat_completion(map(), list()) :: ChatCompletion.t() | {:error, map()}
+  def chat_completion(prompt, options) do
+    OpenAi.ChatCompletion.chat_completion(prompt, options, :default) |> ChatCompletion.parse()
+  end
+
+  @spec chat_completion(map(), function(), list()) :: ChatCompletion.t() | {:error, map()}
+  def chat_completion(prompt, stream_cb, options) do
+    OpenAi.ChatCompletion.chat_completion(prompt, options, stream_cb) |> ChatCompletion.parse()
   end
 
   @doc """
@@ -111,9 +122,19 @@ defmodule OpenAi do
       }
   """
 
-  @spec text_completion(map(), function(), list()) :: {:ok, map() | String.t()} | {:error, map()}
-  def text_completion(prompt, streaming_callback \\ :default, options \\ []) do
-    OpenAi.TextCompletion.text_completion(prompt, options, streaming_callback) |> parse_response()
+  @spec text_completion(map()) :: TextCompletion.t() | {:error, map()}
+  def text_completion(prompt) do
+    text_completion(prompt, [])
+  end
+
+  @spec text_completion(map(), list()) :: TextCompletion.t() | {:error, map()}
+  def text_completion(prompt, options) do
+    OpenAi.TextCompletion.text_completion(prompt, options, :default) |> TextCompletion.parse()
+  end
+
+  @spec text_completion(map(), function(), list()) :: TextCompletion.t() | {:error, map()}
+  def text_completion(prompt, streaming_callback, options) do
+    OpenAi.TextCompletion.text_completion(prompt, options, streaming_callback) |> TextCompletion.parse()
   end
 
   @doc """
@@ -144,7 +165,7 @@ defmodule OpenAi do
   """
   @spec embed_text(map(), list()) :: {:ok, map()} | {:error, map()}
   def embed_text(prompt, options \\ []) do
-    OpenAi.Embedding.create_embedding(prompt, options) |> parse_response()
+    OpenAi.Embedding.create_embedding(prompt, options)
   end
 
   @doc """
@@ -261,9 +282,6 @@ defmodule OpenAi do
   defp parse_response({:ok, %{body: body, status: status_code}}) when status_code >= 400 and status_code < 500 do
     {:error, %{status_code: status_code, body: body}}
   end
-
-  defp parse_response({:ok, %{body: stream, type: :stream}}),
-    do: {:ok, SseParser.parse(stream)}
 
   defp parse_response({:ok, %{body: body}}),
     do: body |> Jason.decode()

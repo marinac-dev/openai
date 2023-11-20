@@ -1,27 +1,13 @@
-defmodule OpenAi.Core.Response.ChatCompletion do
+defmodule OpenAi.Utils.Parser do
   @moduledoc """
-  Documentation for `ChatCompletion` response.
+  Documentation for `Parser` module.
+
+  This module is used to parse responses from OpenAI API.
   """
   require Logger
-  @behaviour OpenAi.Core.Response
 
-  @enforce_keys [:id, :object, :created_at, :choices, :usage]
-  defstruct [:id, :object, :created_at, :choices, :usage, :model]
-
-  @type t :: %__MODULE__{
-          id: String.t(),
-          object: String.t(),
-          # NOTE: Returned field is created, but we rename it to created_at
-          created_at: DateTime.t(),
-          choices: list(map()),
-          usage: list(map()),
-          model: String.t()
-        }
-
-  # * For parsing streaming SSE responses
-  @impl true
-  def parse({:ok, %{body: body, type: :stream}}) do
-    response = %{
+  def parse_chat_sse(data) do
+    init_acc = %{
       id: nil,
       object: nil,
       created_at: nil,
@@ -33,42 +19,42 @@ defmodule OpenAi.Core.Response.ChatCompletion do
           arguments: []
         }
       ],
-      usage: []
+      usage: nil
     }
 
-    body
+    parse_sse(data, init_acc)
+  end
+
+  def parse_text_sse(data) do
+    init_acc = %{
+      id: nil,
+      object: nil,
+      created_at: nil,
+      choices: [
+        %{
+          finish_reason: nil,
+          text: []
+        }
+      ],
+      usage: nil
+    }
+
+    %{choices: [choice]} = parsed = parse_sse(data, init_acc)
+    text = choice.text |> Enum.reverse() |> Enum.join()
+    %{parsed | choices: [%{choice | text: text}]}
+  end
+
+  defp parse_sse(data, init_acc) do
+    data
+    |> Enum.reverse()
     |> Enum.join()
     |> String.split("data: ")
-    |> Enum.reverse()
-    |> Enum.reduce_while(response, fn
+    |> Enum.reduce_while(init_acc, fn
       "", acc -> {:cont, acc}
       "[DONE]" <> _, acc -> {:cont, acc}
       data, acc -> parse_data(data, acc)
     end)
   end
-
-  # * For parsing HTTP responses
-  @impl true
-  def parse({:ok, %{body: body}}) do
-    case Jason.decode(body) do
-      {:ok, decoded} ->
-        opts =
-          decoded
-          |> Enum.reduce(%{}, fn {k, v}, acc ->
-            Map.put(acc, String.to_atom(k), v)
-          end)
-          |> Map.delete(:created)
-          |> Map.put(:created_at, from_unix(decoded))
-
-        {:ok, struct(__MODULE__, opts)}
-
-      {:error, _} ->
-        {:error, "Invalid response body"}
-    end
-  end
-
-  defp from_unix(%{"created" => timestamp}),
-    do: DateTime.from_unix!(timestamp)
 
   defp parse_data(data, acc) do
     decoded = Jason.decode!(data)
@@ -97,12 +83,23 @@ defmodule OpenAi.Core.Response.ChatCompletion do
     {:halt, Map.put(acc, :choices, [choice])}
   end
 
-  defp parse_choice(%{"finish_reason" => "stop"}, %{choices: [choice]} = acc) do
-    string = choice.content |> Enum.reverse() |> Enum.join()
+  defp parse_choice(%{"finish_reason" => "stop"}, %{choices: [%{content: content} = choice]} = acc) do
+    string = content |> Enum.reverse() |> Enum.join()
 
     choice =
       choice
       |> Map.put(:content, string)
+      |> Map.put(:finish_reason, :stop)
+
+    {:halt, Map.put(acc, :choices, [choice])}
+  end
+
+  defp parse_choice(%{"finish_reason" => "stop"}, %{choices: [%{text: text} = choice]} = acc) do
+    string = text |> Enum.reverse() |> Enum.join()
+
+    choice =
+      choice
+      |> Map.put(:text, string)
       |> Map.put(:finish_reason, :stop)
 
     {:halt, Map.put(acc, :choices, [choice])}
@@ -121,13 +118,23 @@ defmodule OpenAi.Core.Response.ChatCompletion do
     {:cont, Map.put(acc, :choices, [choice])}
   end
 
+  # * For chat completion response
   defp parse_choice(%{"delta" => %{"content" => new_content}}, %{choices: [%{content: content} = choice]} = acc) do
     choice = Map.put(choice, :content, [new_content | content])
     {:cont, Map.put(acc, :choices, [choice])}
   end
 
+  # * For text completion response
+  defp parse_choice(%{"text" => new_content}, %{choices: [%{text: content} = choice]} = acc) do
+    choice = Map.put(choice, :text, [new_content | content])
+    {:cont, Map.put(acc, :choices, [choice])}
+  end
+
   defp parse_choice(choice, acc) do
-    Logger.warning("Unhandled choice: #{inspect(choice)}")
+    Logger.warning("Unhandled choice: #{inspect(choice)}\n#{inspect(acc)}")
     {:cont, acc}
   end
+
+  defp from_unix(%{"created" => timestamp}),
+    do: DateTime.from_unix!(timestamp)
 end
