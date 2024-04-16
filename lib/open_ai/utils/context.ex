@@ -6,7 +6,7 @@ defmodule OpenAi.Utils.Context do
   Contexts are used to easily keep track of the conversation history and last response.
   Each new message is added as first item to the history list and the last response is updated.
   """
-  alias OpenAi.Utils.Message
+  alias OpenAi.Utils.Types.Message
 
   @enforce_keys [:last_response, :history]
   defstruct [:last_response, :history]

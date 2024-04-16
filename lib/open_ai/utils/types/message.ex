@@ -1,8 +1,6 @@
-defmodule OpenAi.Utils.Message do
+defmodule OpenAi.Utils.Types.Message do
   @moduledoc """
-  Documentation for `OpenAi.Utils.Message` module.
-
-  This module hold message data for one OpenAI chat completion.
+  Type definition for Message struct.
   """
 
   @enforce_keys [:content, :role]
