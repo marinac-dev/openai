@@ -37,9 +37,9 @@ defmodule OpenAi.Core.Response.ChatCompletion do
     }
 
     body
-    |> Enum.reverse()
     |> Enum.join()
     |> String.split("data: ")
+    |> Enum.reverse()
     |> Enum.reduce_while(response, fn
       "", acc -> {:cont, acc}
       "[DONE]" <> _, acc -> {:cont, acc}

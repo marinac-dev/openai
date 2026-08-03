@@ -1,6 +1,4 @@
 defmodule OpenAi.Core.Client do
-  @moduledoc false
-
   defmacro __using__(_opts) do
     quote do
       @doc false
@@ -8,15 +6,10 @@ defmodule OpenAi.Core.Client do
         full_url = api_url() <> api_path() <> path
 
         base = %{
+          "OpenAI-Organization" => get_organization(),
           "Authorization" => api_key(),
           "Content-Type" => "application/json"
         }
-
-        base =
-          case get_organization() do
-            nil -> base
-            organization -> Map.put(base, "OpenAI-Organization", organization)
-          end
 
         headers = Map.merge(base, headers) |> Map.to_list()
 
@@ -42,7 +35,7 @@ defmodule OpenAi.Core.Client do
 
       def request_with_retry(request_builder_fn, _), do: request_builder_fn.()
 
-      defp retry_config do
+      defp retry_config() do
         case Application.get_env(:openai, :retry_config) do
           nil -> %{}
           retry_config -> retry_config
@@ -50,8 +43,10 @@ defmodule OpenAi.Core.Client do
       end
 
       defp get_organization do
-        Application.get_env(:openai, :organization) ||
-          Application.get_env(:openai, :organization_key)
+        case Application.get_env(:openai, :organization_key) do
+          nil -> raise "OpenAI Organization key is not set"
+          organization_key -> organization_key
+        end
       end
 
       defp api_key do
@@ -61,19 +56,10 @@ defmodule OpenAi.Core.Client do
         end
       end
 
-      defp api_url, do: unquote(__MODULE__).legacy_api_url()
+      defp api_url, do: "https://api.openai.com"
 
       import OpenAi.Core.Client
     end
-  end
-
-  @doc false
-  @spec legacy_api_url() :: String.t()
-  def legacy_api_url do
-    :openai
-    |> Application.get_env(:base_url, System.get_env("OPENAI_BASE_URL") || "https://api.openai.com/v1")
-    |> String.trim_trailing("/")
-    |> String.trim_trailing("/v1")
   end
 
   @doc false
