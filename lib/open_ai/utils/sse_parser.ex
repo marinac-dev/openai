@@ -34,7 +34,6 @@ defmodule OpenAi.Utils.SseParser do
 
   # * Order matters here
   defp parse_delta(%{"function_call" => function_call}) do
-    IO.inspect(function_call, label: "function_call")
     function_call
   end
 

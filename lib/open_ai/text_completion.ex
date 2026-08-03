@@ -1,4 +1,6 @@
 defmodule OpenAi.TextCompletion do
+  @moduledoc false
+
   use OpenAi.Core.Client
 
   @doc false
@@ -46,7 +48,7 @@ defmodule OpenAi.TextCompletion do
       iex> text_completion(prompt)
   """
 
-  @spec text_completion(text_params(), keyword(), function()) :: {:ok, %Finch.Response{}} | {:error, map()}
+  @spec text_completion(text_params(), keyword(), function()) :: {:ok, Finch.Response.t()} | {:error, map()}
   def text_completion(%{stream: true} = prompt, options, :default),
     do: text_completion(prompt, options, &default_stream_callback/2)
 
