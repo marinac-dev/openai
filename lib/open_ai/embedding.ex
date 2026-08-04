@@ -9,10 +9,10 @@ defmodule OpenAi.Embedding do
   scope "/v1/embeddings"
 
   @type embed_body :: %{
-    required(:input) => String.t(),
-    required(:model) => String.t(),
-    optional(:user) => String.t()
-  }
+          required(:input) => String.t(),
+          required(:model) => String.t(),
+          optional(:user) => String.t()
+        }
 
   @doc """
   Creates an embedding vector representing the input text.

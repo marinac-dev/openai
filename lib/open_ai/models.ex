@@ -1,26 +1,26 @@
 defmodule OpenAi.Models do
-  @moduledoc """
-  List and describe the various models available in the API.
-  You can refer to the [Models](https://platform.openai.com/docs/models) documentation to understand what models are available and the differences between them.
-  """
+  @moduledoc "Client functions for listing, retrieving, and deleting models."
 
-  use OpenAi.Core.Client
+  alias OpenAi.Client
+
+  @spec list(Client.t(), keyword()) :: {:ok, map()} | {:error, OpenAi.Error.t()}
+  def list(%Client{} = client, options \\ []), do: Client.request(client, :get, "/models", options)
+
+  @spec retrieve(Client.t(), String.t(), keyword()) :: {:ok, map()} | {:error, OpenAi.Error.t()}
+  def retrieve(%Client{} = client, model, options \\ []) do
+    Client.request(client, :get, path(model), options)
+  end
+
+  @spec delete(Client.t(), String.t(), keyword()) :: {:ok, map()} | {:error, OpenAi.Error.t()}
+  def delete(%Client{} = client, model, options \\ []) do
+    Client.request(client, :delete, path(model), options)
+  end
+
   @doc false
-  scope "/v1/models"
+  def list_models, do: list(Client.new())
 
-  @doc """
-  Lists the currently available models, and provides basic information about each one such as the owner and availability.
-  """
-  @spec list_models() :: {:ok, map()} | {:error, map()}
-  def list_models() do
-    get("", "", %{}, [])
-  end
+  @doc false
+  def retrieve_model(model), do: retrieve(Client.new(), model)
 
-  @doc """
-  Retrieves a model instance, providing basic information about the model such as the owner and permissioning.
-  """
-  @spec retrieve_model(String.t()) :: {:ok, map()} | {:error, map()}
-  def retrieve_model(model_id) do
-    get("/#{model_id}", "", %{}, [])
-  end
+  defp path(model), do: "/models/" <> Client.path_segment(model)
 end

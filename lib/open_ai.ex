@@ -7,9 +7,9 @@ defmodule OpenAi do
   use Application
   require Logger
 
-  alias OpenAi.Core.Response.ListModels
-  alias OpenAi.Core.Response.RetrieveModel
+  alias OpenAi.Client
   alias OpenAi.Core.Response.ChatCompletion
+  alias OpenAi.Utils.SseParser
 
   @doc false
   def start(_type, _args) do
@@ -21,12 +21,21 @@ defmodule OpenAi do
     Supervisor.start_link(children, opts)
   end
 
+  @doc "Creates an explicit OpenAI API client."
+  @spec client(keyword()) :: Client.t()
+  def client(options \\ []), do: Client.new(options)
+
+  @doc "Calls any OpenAI REST endpoint using a client built from application config."
+  @spec request(atom(), String.t(), Client.request_options()) ::
+          {:ok, term()} | {:error, OpenAi.Error.t()}
+  def request(method, path, options \\ []), do: Client.request(client(), method, path, options)
+
   @doc """
   Lists the currently available models, and provides basic information about each one such as the owner and availability.
   """
   @spec list_models() :: {:ok, map()} | {:error, map()}
-  def list_models() do
-    OpenAi.Models.list_models() |> parse_response()
+  def list_models do
+    OpenAi.Models.list(client())
   end
 
   @doc """
@@ -63,7 +72,7 @@ defmodule OpenAi do
   """
   @spec retrieve_model(String.t()) :: {:ok, map()} | {:error, map()}
   def retrieve_model(model_id) do
-    OpenAi.Models.retrieve_model(model_id) |> parse_response()
+    OpenAi.Models.retrieve(client(), model_id)
   end
 
   @doc """
@@ -78,7 +87,7 @@ defmodule OpenAi do
 
   @spec chat_completion(map(), list()) :: {:ok, String.t()} | {:ok, map()} | {:error, map()}
   def chat_completion(prompt, streaming_callback \\ :default, options \\ []) do
-    OpenAi.ChatCompletion.chat_completion(prompt, streaming_callback, options) |> ChatCompletion.parse()
+    OpenAi.ChatCompletion.chat_completion(prompt, options, streaming_callback) |> ChatCompletion.parse()
   end
 
   @doc """
@@ -179,8 +188,8 @@ defmodule OpenAi do
   Returns a list of files that belong to the user's organization.
   """
   @spec list_files() :: {:ok, map()} | {:error, map()}
-  def list_files() do
-    OpenAi.Files.list_files() |> parse_response()
+  def list_files do
+    OpenAi.Files.list(client())
   end
 
   @doc """
@@ -189,7 +198,7 @@ defmodule OpenAi do
   """
   @spec upload_file(String.t(), String.t(), list()) :: {:ok, map()} | {:error, map()}
   def upload_file(file_path, purpose, options \\ []) do
-    OpenAi.Files.upload_file({file_path, purpose}, options) |> parse_response()
+    OpenAi.Files.create(client(), %{file: file_path, purpose: purpose}, options)
   end
 
   @doc """
@@ -197,7 +206,7 @@ defmodule OpenAi do
   """
   @spec delete_file(String.t()) :: {:ok, map()} | {:error, map()}
   def delete_file(file_id) do
-    OpenAi.Files.delete_file(file_id) |> parse_response()
+    OpenAi.Files.delete(client(), file_id)
   end
 
   @doc """
@@ -205,16 +214,16 @@ defmodule OpenAi do
   """
   @spec retrieve_file(String.t()) :: {:ok, map()} | {:error, map()}
   def retrieve_file(file_id) do
-    OpenAi.Files.retrieve_file(file_id) |> parse_response()
+    OpenAi.Files.retrieve(client(), file_id)
   end
 
   @doc """
   Returns the contents of the specified file.
   Takes a file id and returns the contents of the file.
   """
-  @spec file_content(String.t()) :: {:ok, map()} | {:error, map()}
+  @spec file_content(String.t()) :: {:ok, binary()} | {:error, map()}
   def file_content(file_id) do
-    OpenAi.Files.retrieve_file_content(file_id) |> parse_response()
+    OpenAi.Files.content(client(), file_id)
   end
 
   @doc """
