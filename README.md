@@ -96,12 +96,65 @@ OpenAi.Audio.speech(client, %{
 })
 ```
 
-Resource facades are available for Responses, Chat Completions, Conversations,
-Embeddings, Moderations, Models, Files, Audio, and Images.
+Chat Completions streams can be folded back into a `chat.completion` object,
+including tool calls and usage:
+
+```elixir
+{:ok, chunks} = Agent.start_link(fn -> [] end)
+body = %{model: "gpt-5.4", messages: [%{role: "user", content: "Hello"}]}
+
+{:ok, _response} =
+  OpenAi.Chat.Completions.stream(client, body, fn chunk -> Agent.update(chunks, &[chunk | &1]) end)
+
+completion = chunks |> Agent.get(&Enum.reverse/1) |> OpenAi.Chat.Completions.accumulate()
+```
+
+Every operation in `docs/openai-openapi.yaml` has a resource function; each
+function's docs name the operation it calls (for example
+`` `GET /vector_stores/{vector_store_id}/files` ``):
+
+| Area | Modules |
+|---|---|
+| Responses | `OpenAi.Responses`, `OpenAi.Conversations` |
+| Chat and text | `OpenAi.Chat.Completions`, `OpenAi.Completions`, `OpenAi.Embeddings`, `OpenAi.Moderations`, `OpenAi.Models` |
+| Files | `OpenAi.Files`, `OpenAi.Uploads`, `OpenAi.Batches`, `OpenAi.VectorStores` (+ `.Files`, `.FileBatches`), `OpenAi.Containers` (+ `.Files`) |
+| Media | `OpenAi.Audio` (+ `.VoiceConsents`), `OpenAi.Images`, `OpenAi.Videos` (+ `.Characters`), `OpenAi.ContentProvenance` |
+| Training and evals | `OpenAi.FineTuning.Jobs`, `.Checkpoints.Permissions`, `.Graders`, `OpenAi.Evals` (+ `.Runs`, `.Runs.OutputItems`) |
+| Agents | `OpenAi.Skills` (+ `.Versions`), `OpenAi.ChatKit.Sessions`, `.Threads`, `OpenAi.Realtime.*` (REST) |
+| Assistants (deprecated) | `OpenAi.Assistants`, `OpenAi.Threads` (+ `.Messages`, `.Runs`, `.Runs.Steps`) |
+| Admin API | `OpenAi.Admin.*`, `OpenAi.Admin.Projects.*` — use a client built with an admin API key |
+
+The `OpenAI-Beta` header is added automatically for Assistants/Threads and
+ChatKit. Beta Responses endpoints are selected with the `:beta` option:
+
+```elixir
+OpenAi.Responses.create(client, body, beta: ["feature-name"])
+```
+
+## Uploads
+
+Multipart fields take `{:file, path}` for files on disk or
+`{:file_content, binary, filename}` for in-memory content. Resource functions
+mark their file fields, so a plain path also works there:
+
+```elixir
+OpenAi.Uploads.add_part(client, upload_id, %{data: {:file_content, chunk, "part.bin"}})
+```
+
+## Webhooks
+
+Verify and decode a delivery from the raw request body and headers. The secret
+defaults to `config :openai, :webhook_secret` or `OPENAI_WEBHOOK_SECRET`:
+
+```elixir
+{:ok, %{"type" => "response.completed"} = event} =
+  OpenAi.Webhooks.unwrap(raw_body, conn.req_headers)
+```
 
 ## Any Endpoint
 
-`OpenAi.Client.request/4` can call every path in the OpenAPI document:
+`OpenAi.Client.request/4` calls any path directly. List query values are sent
+as `name[]=value`; multipart bodies use `body: {:multipart, fields}`:
 
 ```elixir
 OpenAi.Client.request(client, :get, "/vector_stores", query: [limit: 20])
