@@ -3,6 +3,7 @@ defmodule OpenAi.Audio do
 
   alias OpenAi.{Client, Multipart}
 
+  @doc "Generates speech audio. `POST /audio/speech`"
   @spec speech(Client.t(), map(), keyword()) :: {:ok, binary()} | {:error, OpenAi.Error.t()}
   def speech(%Client{} = client, body, options \\ []) when is_map(body) do
     options = options |> Keyword.put(:body, body) |> Keyword.put(:decode, false)
@@ -16,6 +17,7 @@ defmodule OpenAi.Audio do
     Client.stream(client, :post, "/audio/speech", on_event, Keyword.put(options, :body, body))
   end
 
+  @doc "Transcribes audio. `POST /audio/transcriptions`"
   @spec transcribe(Client.t(), map(), keyword()) :: {:ok, map()} | {:error, OpenAi.Error.t()}
   def transcribe(%Client{} = client, params, options \\ []) when is_map(params) do
     multipart_request(client, "/audio/transcriptions", params, options)
@@ -25,39 +27,26 @@ defmodule OpenAi.Audio do
           {:ok, OpenAi.Response.t()} | {:error, OpenAi.Error.t()}
   def stream_transcription(%Client{} = client, params, on_event, options \\ []) when is_map(params) do
     params = put_field(params, :stream, true)
-    multipart = params |> mark_file() |> Multipart.build()
-
-    Client.stream(
-      client,
-      :post,
-      "/audio/transcriptions",
-      on_event,
-      Keyword.put(options, :body, {:multipart, multipart})
-    )
+    body = {:multipart, Multipart.put_files(params, [:file])}
+    Client.stream(client, :post, "/audio/transcriptions", on_event, Keyword.put(options, :body, body))
   end
 
+  @doc "Translates audio into English. `POST /audio/translations`"
   @spec translate(Client.t(), map(), keyword()) :: {:ok, map()} | {:error, OpenAi.Error.t()}
   def translate(%Client{} = client, params, options \\ []) when is_map(params) do
     multipart_request(client, "/audio/translations", params, options)
   end
 
+  @doc "Creates a custom voice. `POST /audio/voices`"
+  @spec create_voice(Client.t(), map(), keyword()) :: {:ok, map()} | {:error, OpenAi.Error.t()}
+  def create_voice(%Client{} = client, params, options \\ []) when is_map(params) do
+    body = {:multipart, Multipart.put_files(params, [:audio_sample])}
+    Client.request(client, :post, "/audio/voices", Keyword.put(options, :body, body))
+  end
+
   defp multipart_request(client, path, params, options) do
-    multipart = params |> mark_file() |> Multipart.build()
-    Client.request(client, :post, path, Keyword.put(options, :body, {:multipart, multipart}))
-  end
-
-  defp mark_file(params) do
-    params
-    |> mark_file(:file)
-    |> mark_file("file")
-  end
-
-  defp mark_file(params, key) do
-    case Map.fetch(params, key) do
-      {:ok, {:file, _path}} -> params
-      {:ok, path} -> Map.put(params, key, {:file, path})
-      :error -> params
-    end
+    body = {:multipart, Multipart.put_files(params, [:file])}
+    Client.request(client, :post, path, Keyword.put(options, :body, body))
   end
 
   defp put_field(map, key, value) do

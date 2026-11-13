@@ -25,7 +25,7 @@ defmodule OpenAi.ClientTest do
     assert_receive {:request, request, request_options}
     assert request.method == "POST"
     assert request.path == "/v1/responses/resp%20id"
-    assert request.query == "include=a&include=b"
+    assert request.query == "include%5B%5D=a&include%5B%5D=b"
     assert Jason.decode!(request.body) == %{"model" => "gpt-5.4"}
     assert request_options[:receive_timeout] == 60_000
     assert header(request.headers, "authorization") == "Bearer test-key"
@@ -187,6 +187,75 @@ defmodule OpenAi.ClientTest do
     assert body =~ "training data"
     assert body =~ ~s(name="expires_after[anchor]")
     assert body =~ "created_at"
+  end
+
+  test "encodes in-memory files and list fields passed directly to request/4" do
+    owner = self()
+
+    client =
+      client(
+        requester: fn request, _finch, _options ->
+          send(owner, {:multipart_request, request})
+          json_response(200, %{"id" => "part_123"})
+        end
+      )
+
+    assert {:ok, _body} =
+             Client.request(client, :post, "/uploads/upload_123/parts",
+               body: {:multipart, %{data: {:file_content, "chunk bytes", "part.bin"}, tags: ["a", "b"]}}
+             )
+
+    assert_receive {:multipart_request, request}
+    {:stream, stream} = request.body
+    body = stream |> Enum.to_list() |> IO.iodata_to_binary()
+
+    assert body =~ ~s(name="data"; filename="part.bin")
+    assert body =~ "chunk bytes"
+    assert length(String.split(body, ~s(name="tags[]"))) == 3
+  end
+
+  test "sends the beta opt-in header required by Assistants, Threads, and ChatKit" do
+    client = client([])
+
+    for {path, expected} <- [
+          {"/assistants", "assistants=v2"},
+          {"/threads/thread_1/runs", "assistants=v2"},
+          {"/chatkit/sessions", "chatkit_beta=v1"},
+          {"/responses", nil}
+        ] do
+      assert {:ok, request} = Client.build_request(client, :get, path)
+      assert header(request.headers, "openai-beta") == expected
+    end
+
+    assert {:ok, request} =
+             Client.build_request(client, :get, "/assistants", headers: [{"OpenAI-Beta", "assistants=v3"}])
+
+    assert header(request.headers, "openai-beta") == "assistants=v3"
+  end
+
+  test "targets beta Responses endpoints and forwards beta feature names" do
+    owner = self()
+
+    client =
+      client(
+        requester: fn request, _finch, _options ->
+          send(owner, {:request, request})
+          json_response(200, %{"input_tokens" => 3})
+        end
+      )
+
+    assert {:ok, _body} =
+             Responses.input_tokens(client, %{model: "gpt-5.4", input: "Hi"}, beta: ["feature-x", "feature-y"])
+
+    assert_receive {:request, request}
+    assert request.path == "/v1/responses/input_tokens"
+    assert request.query == "beta=true"
+    assert header(request.headers, "openai-beta") == "feature-x,feature-y"
+
+    assert {:ok, _body} = Responses.retrieve(client, "resp_1", [include: ["x"]], beta: true)
+    assert_receive {:request, request}
+    assert URI.decode_query(request.query) == %{"include[]" => "x", "beta" => "true"}
+    assert header(request.headers, "openai-beta") == nil
   end
 
   test "extracts output text from a Responses API object" do

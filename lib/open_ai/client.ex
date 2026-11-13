@@ -122,7 +122,7 @@ defmodule OpenAi.Client do
           {:ok, Finch.Request.t()} | {:error, Error.t()}
   def build_request(%__MODULE__{} = client, method, path, options \\ []) do
     with {:ok, body, body_headers} <- encode_body(Keyword.get(options, :body)) do
-      headers = build_headers(client, body_headers, Keyword.get(options, :headers, []))
+      headers = build_headers(client, path, body_headers, Keyword.get(options, :headers, []))
       url = build_url(client.base_url, path, Keyword.get(options, :query, []))
       {:ok, Finch.build(method, url, headers, body)}
     end
@@ -273,7 +273,8 @@ defmodule OpenAi.Client do
 
   defp encode_body(nil), do: {:ok, nil, []}
 
-  defp encode_body({:multipart, multipart}) do
+  defp encode_body({:multipart, fields}) when is_map(fields) or is_list(fields) do
+    multipart = OpenAi.Multipart.build(fields)
     body = {:stream, Multipart.body_stream(multipart)}
 
     headers = [
@@ -294,13 +295,14 @@ defmodule OpenAi.Client do
     end
   end
 
-  defp build_headers(client, body_headers, request_headers) do
+  defp build_headers(client, path, body_headers, request_headers) do
     base = [
       {"authorization", "Bearer #{client.api_key}"},
-      {"user-agent", "openai-elixir/0.1"},
+      {"user-agent", "openai-elixir/#{Application.spec(:openai, :vsn)}"},
       {"accept", "application/json"},
       {"openai-organization", client.organization},
-      {"openai-project", client.project}
+      {"openai-project", client.project},
+      {"openai-beta", beta_header(path)}
     ]
 
     [base, client.headers, body_headers, header_entries(request_headers)]
@@ -311,6 +313,13 @@ defmodule OpenAi.Client do
     end)
     |> Map.to_list()
   end
+
+  # Assistants/Threads and ChatKit endpoints reject requests without their beta opt-in.
+  defp beta_header("/" <> path), do: beta_header(path)
+  defp beta_header("assistants" <> _rest), do: "assistants=v2"
+  defp beta_header("threads" <> _rest), do: "assistants=v2"
+  defp beta_header("chatkit" <> _rest), do: "chatkit_beta=v1"
+  defp beta_header(_path), do: nil
 
   defp build_url(base_url, path, query) do
     path = "/" <> String.trim_leading(path, "/")
@@ -359,6 +368,7 @@ defmodule OpenAi.Client do
   end
 
   defp flatten_query(key, value) when is_list(value) do
+    key = if String.ends_with?(key, "[]"), do: key, else: key <> "[]"
     Enum.flat_map(value, &flatten_query(key, &1))
   end
 
