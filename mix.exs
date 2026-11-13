@@ -5,7 +5,7 @@ defmodule OpenAi.MixProject do
     [
       app: :openai,
       version: "0.1.0",
-      elixir: "~> 1.14",
+      elixir: "~> 1.17",
       start_permanent: Mix.env() == :prod,
       deps: deps()
     ]
@@ -22,16 +22,14 @@ defmodule OpenAi.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ex_doc, "~> 0.34.2", only: :dev},
-      {:finch, "~> 0.20"},
+      {:ex_doc, "~> 0.40", only: :dev, runtime: false},
+      {:finch, "~> 0.24"},
       {:jason, "~> 1.4"},
-      {:idna, "~> 6.0"},
       {:castore, "~> 1.0"},
-      {:nx, "~> 0.5.2"},
-      {:multipart, "~> 0.3.1"},
+      {:multipart, "~> 0.6"},
       # * Code quality
-      {:credo, "~> 1.6", only: [:dev, :test], runtime: false},
-      {:dialyxir, "~> 1.0", only: [:dev], runtime: false}
+      {:credo, "~> 1.7", only: [:dev, :test], runtime: false},
+      {:dialyxir, "~> 1.4", only: [:dev], runtime: false}
     ]
   end
 end
