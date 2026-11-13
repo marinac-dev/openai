@@ -28,7 +28,7 @@ defmodule OpenAi.Error do
           headers: [{String.t(), String.t()}] | nil,
           body: term(),
           cause: term(),
-          kind: :api | :transport | :encoding | :decoding | :stream
+          kind: :api | :transport | :encoding | :decoding | :stream | :webhook
         }
 
   @doc false
