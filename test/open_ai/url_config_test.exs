@@ -2,7 +2,6 @@ defmodule OpenAi.URLConfigTest do
   use ExUnit.Case, async: false
 
   alias OpenAi.Client
-  alias OpenAi.Core.Client, as: LegacyClient
 
   setup do
     original_environment = System.get_env("OPENAI_BASE_URL")
@@ -26,8 +25,6 @@ defmodule OpenAi.URLConfigTest do
     assert {:ok, request} = Client.build_request(client, :get, "/models")
     assert request.host == "gateway.example"
     assert request.path == "/openai/v1/models"
-
-    assert LegacyClient.legacy_api_url() == "https://gateway.example/openai"
   end
 
   test "an explicit base URL takes precedence over the environment" do

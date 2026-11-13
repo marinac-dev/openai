@@ -3,6 +3,7 @@ defmodule OpenAi.Moderations do
 
   alias OpenAi.Client
 
+  @doc "Classifies content for policy violations. `POST /moderations`"
   @spec create(Client.t(), map(), keyword()) :: {:ok, map()} | {:error, OpenAi.Error.t()}
   def create(%Client{} = client, body, options \\ []) when is_map(body) do
     Client.request(client, :post, "/moderations", Keyword.put(options, :body, body))
